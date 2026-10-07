@@ -5,7 +5,7 @@ Version: 1.0.0
 
 # flake8: noqa
 # pylint: disable=all
-# pytype: skip-file
+# pyrefly: ignore-errors
 
 from __future__ import annotations
 from typing import Optional, List, Union, Literal, Any
