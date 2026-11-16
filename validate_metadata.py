@@ -1,10 +1,10 @@
 # NOTE: This validator is a work in progress. The main validation logic (schema and semantic checks)
 # is functional, but not every edge case may be covered yet. Use with that in mind.
 
+import argparse
 import json
 import os
 import sys
-import argparse
 
 DEFAULT_SCHEMA = "generated_profile/rise-ro-crate-profile-schema.json"
 
@@ -156,7 +156,8 @@ def diagnose_error(error, instance, schema, validator_cls):
                     return f"{label} Invalid:\n" + msg_list
 
             return "Global validation failed: a required entity is missing or invalid in @graph."
-    except Exception as e:
+    # A failed heuristic must not hide the original validation error.
+    except Exception as e:  # noqa: BLE001
         return f"Diagnosis failed: {e}. Original Error: {error.message}"
 
     return None
@@ -568,9 +569,7 @@ def validate_graph_in_root_has_part(instance):
             return False
         if entity_id.startswith('#'):
             return False
-        if get_types(entity) & EXCLUDED_TYPES:
-            return False
-        return True
+        return not get_types(entity) & EXCLUDED_TYPES
 
     def get_ref_id(ref):
         if isinstance(ref, dict) and '@id' in ref:
