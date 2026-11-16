@@ -5,9 +5,15 @@ import os
 import re
 
 from rocratepcc import (
-    Author, CustomResourceDescriptor, License, Profile,
-    ResourceDescriptor, RootDataEntity, Specification,
-    TextualResource, UsedType,
+    Author,
+    CustomResourceDescriptor,
+    License,
+    Profile,
+    ResourceDescriptor,
+    RootDataEntity,
+    Specification,
+    TextualResource,
+    UsedType,
 )
 
 OUTPUT_DIR = "generated_profile"
@@ -454,10 +460,12 @@ def generate_json_schema(data):
                 for prop in current.get("properties", []):
                     # Child overrides parent property definition if exists
                     # Also skip properties that are explicitly excluded from inheritance
-                    if prop["name"] not in collected_properties and prop["name"] not in ["@id", "@type"]:
-                        if prop["name"] not in excluded_props:
-
-                            collected_properties[prop["name"]] = build_property_schema(prop)
+                    if (
+                        prop["name"] not in collected_properties
+                        and prop["name"] not in ["@id", "@type"]
+                        and prop["name"] not in excluded_props
+                    ):
+                        collected_properties[prop["name"]] = build_property_schema(prop)
 
                     # Inheritance of required status (also check exclusion list):
                     if prop.get("requirement", "optional") == "required" and prop["name"] not in excluded_props:
@@ -488,17 +496,15 @@ def generate_json_schema(data):
         # Special Case: RootDataEntity mutual exclusivity for mainEntity and mentions
         one_of_constraints = []
         if def_name == "RootDataEntity":
-            if "mainEntity" in final_reqs:
-                final_reqs.remove("mainEntity")
-            if "mentions" in final_reqs:
-                final_reqs.remove("mentions")
+            final_reqs.discard("mainEntity")
+            final_reqs.discard("mentions")
 
             one_of_constraints = [
                 {"required": ["mainEntity"]},
                 {"required": ["mentions"]}
             ]
 
-        required_list = sorted(list(final_reqs))
+        required_list = sorted(final_reqs)
 
         def_schema = {
             "type": "object",
@@ -530,9 +536,9 @@ def generate_json_schema(data):
         json.dump(schema, f, indent=4)
 
 # Helper classes
-class DefinedTerm():
-    def __init__(self, id, termCode, term_type, name, description, domain=[], range=[]):
-        self.dict_obj = dict()
+class DefinedTerm:
+    def __init__(self, id, termCode, term_type, name, description, domain=(), range=()):
+        self.dict_obj = {}
         self.dict_obj["@id"] = id
         self.dict_obj["@type"] = ["DefinedTerm"]
         if term_type == "Class":
@@ -548,9 +554,9 @@ class DefinedTerm():
         if range:
             self.dict_obj["rangeIncludes"] = [{"@id": r} for r in range]
 
-class DefinedTermSet():
+class DefinedTermSet:
     def __init__(self, id, name):
-        self.defined_term_set = dict()
+        self.defined_term_set = {}
         self.defined_term_set["@id"] = id
         self.defined_term_set["@type"] = "DefinedTermSet"
         self.defined_term_set["name"] = name
@@ -597,13 +603,12 @@ class DefinedTermSet():
                 )
                 self.defined_terms.append(defined_term.dict_obj)
 
-                reference = dict()
+                reference = {}
                 reference["@id"] = identifier
                 self.defined_term_set["hasDefinedTerm"].append(reference)
 
     def __iter__(self):
-        for entry in [self.defined_term_set, *self.defined_terms]:
-            yield entry
+        yield from [self.defined_term_set, *self.defined_terms]
 
 def generate_profile_crate(data):
     """
@@ -761,9 +766,8 @@ def generate_markdown(data):
     structure_svg_src = os.path.join("resources", "rise-ro-crate-profile-structure.svg")
     structure_svg_dst = os.path.join(OUTPUT_DIR, "rise-ro-crate-profile-structure.svg")
     if os.path.exists(structure_svg_src):
-        with open(structure_svg_src, "rb") as fsrc:
-            with open(structure_svg_dst, "wb") as fdst:
-                fdst.write(fsrc.read())
+        with open(structure_svg_src, "rb") as fsrc, open(structure_svg_dst, "wb") as fdst:
+            fdst.write(fsrc.read())
         lines.append('<img src="rise-ro-crate-profile-structure.svg" style="width: 100%; height: auto;" alt="RISE RO-Crate Profile Structure">')
         lines.append("")
 
@@ -1000,19 +1004,13 @@ def generate_typescript(data):
             types.add(ts_primitives[t_name])
 
         # Object types map to EntityRef
-        is_obj = False
-        if t_name in entity_names:
-            is_obj = True
-        elif t_name in type_mapping.get("object", []):
-            is_obj = True
-
-        if is_obj:
+        if t_name in entity_names or t_name in type_mapping.get("object", []):
             types.add("EntityRef")
 
         if not types:
             return "string"
 
-        return " | ".join(sorted(list(types)))
+        return " | ".join(sorted(types))
 
     def build_property_line(prop, indent="  "):
         """Build a TypeScript property line from a property definition."""
@@ -1033,7 +1031,7 @@ def generate_typescript(data):
              for p in t_str.split(" | "):
                  final_types.add(p.strip())
 
-        sorted_types = sorted(list(final_types))
+        sorted_types = sorted(final_types)
 
         if not sorted_types:
             type_str = "unknown"
@@ -1389,7 +1387,7 @@ def generate_pydantic_models(data, less_strict_object_reference=True):
     # Flatten lookup to strings
     type_lookup = {}
     for t_name, types in type_lookup_sets.items():
-        sorted_types = sorted(list(types))
+        sorted_types = sorted(types)
         if len(sorted_types) == 1:
             type_lookup[t_name] = sorted_types[0]
         else:
@@ -1446,13 +1444,6 @@ def generate_pydantic_models(data, less_strict_object_reference=True):
         lines.append(f'    """{description}"""')
         lines.append('')
 
-        props = entity.get("properties", [])
-
-        # Filter properties
-        valid_props = []
-        for prop in props:
-             valid_props.append(prop)
-
         has_own_fields = False
 
         if parent == "BaseModel":
@@ -1467,7 +1458,7 @@ def generate_pydantic_models(data, less_strict_object_reference=True):
         if class_name == "RootDataEntry":
             lines.append("    conformsTo: EntityReference  # Profile this crate conforms to")
 
-        for prop in valid_props:
+        for prop in entity.get("properties", []):
             p_name = prop["name"]
 
             if p_name in ["@id", "@type"]:
@@ -1488,7 +1479,7 @@ def generate_pydantic_models(data, less_strict_object_reference=True):
                 else:
                     py_types.append(res_type)
 
-            py_types = sorted(list(set(py_types)))  # deduplicate
+            py_types = sorted(set(py_types))
 
             if less_strict_object_reference:
                 has_entity_ref = any(t.startswith('"') for t in py_types)
