@@ -45,6 +45,9 @@ The profile is defined in `profile_definition.json`. The script `generate_profil
 
 All output files are written to the folder `generated_profile/`.
 
+The Pydantic models can be installed with pip as the module `rise_ro_crate_profile_pydantic`.
+Pin a commit, for example `pip install "rise-ro-crate-profile @ git+https://github.com/tumi8/rise-ro-crate-profile.git@<commit>"`.
+
 ### Profile Validation
 
 The script `validate_metadata.py` validates if a `ro-crate-metadata.json` file conforms to the RISE profile.

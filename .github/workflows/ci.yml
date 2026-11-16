@@ -16,6 +16,11 @@ jobs:
         with:
           python-version: "3.14"
 
+      - name: Install package
+        run: |
+          pip install -q .
+          python -c "import importlib.metadata as md, rise_ro_crate_profile_pydantic as m; assert m.RISEROCrateProfile().version == md.version('rise-ro-crate-profile')"
+
       - name: Install ruff
         run: pip install -q ruff
 

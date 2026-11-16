@@ -1,1 +1,3 @@
 venv-rise-profile/
+build/
+*.egg-info/

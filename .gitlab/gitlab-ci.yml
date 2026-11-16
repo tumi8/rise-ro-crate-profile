@@ -8,6 +8,8 @@ lint:
   before_script:
     - pip install -q ruff
   script:
+    - pip install -q .
+    - python -c "import importlib.metadata as md, rise_ro_crate_profile_pydantic as m; assert m.RISEROCrateProfile().version == md.version('rise-ro-crate-profile')"
     - ruff check --line-length 120 generate_profile.py validate_metadata.py
 
 pages:
